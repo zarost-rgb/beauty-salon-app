@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pl" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bellezza Studio | Ekskluzywny Salon Urody & Spa</title>
+  <meta name="description" content="Profesjonalny salon urody i spa Bellezza Studio. Stylizacja fryzur, manicure, masaże oraz zaawansowana pielęgnacja twarzy.">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fdf8f6',
+              100: '#f2e8e5',
+              200: '#eaddd7',
+              300: '#e0cec7',
+              500: '#c59b82',
+              600: '#b08369',
+              700: '#8c6049',
+              800: '#6d4835',
+              900: '#43281c',
+            },
+            gold: {
+              DEFAULT: '#d4af37',
+              light: '#f3e5ab',
+              dark: '#aa8c2c'
+            }
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#fcfaf8] text-neutral-800 font-sans antialiased min-h-screen flex flex-col selection:bg-brand-500 selection:text-white">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+  <!-- Navigation -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-neutral-100 shadow-sm transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-full bg-brand-500 flex items-center justify-center text-white font-serif text-xl font-bold shadow-md group-hover:scale-105 transition-transform">
+          B
+        </div>
+        <div class="flex flex-col">
+          <span class="font-serif text-2xl font-bold tracking-tight text-neutral-900 leading-none">Bellezza Studio</span>
+          <span class="text-xs uppercase tracking-widest text-brand-600 font-semibold mt-1">Salon Urody & Spa</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-600">
+        <a href="#uslugi" class="hover:text-brand-600 transition-colors">Usługi</a>
+        <a href="#o-nas" class="hover:text-brand-600 transition-colors">O nas</a>
+        <a href="#rezerwacja" class="hover:text-brand-600 transition-colors">Rezerwacja Online</a>
+        <a href="#rezerwacje-lista" class="hover:text-brand-600 transition-colors">Twoje Wizyty</a>
+        <a href="#kontakt" class="hover:text-brand-600 transition-colors">Kontakt</a>
+      </nav>
+
+      <!-- CTA Button -->
+      <div class="flex items-center gap-4">
+        <a href="#rezerwacja" class="inline-flex items-center justify-center px-5 py-2.5 rounded-full text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 active:scale-95 shadow-md shadow-brand-500/20 transition-all">
+          Umów wizytę
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-grow">
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden pt-12 pb-20 md:py-28 bg-gradient-to-b from-brand-50 via-white to-[#fcfaf8]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          <div class="lg:col-span-7 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-100 text-brand-800 text-xs font-semibold uppercase tracking-wider">
+              <span class="w-2 h-2 rounded-full bg-brand-600 animate-pulse"></span>
+              Profesjonalna pielęgnacja w centrum miasta
+            </div>
+            <h1 class="font-serif text-4xl sm:text-5xl lg:text-6xl text-neutral-900 font-bold leading-tight">
+              Odkryj Swoje Naturalne Piękno w <span class="text-brand-600 italic">Bellezza Studio</span>
+            </h1>
+            <p class="text-lg text-neutral-600 max-w-xl leading-relaxed">
+              Zapewniamy mistrzowskie cięcia, zaawansowaną kosmetologię estetyczną oraz relaksujące rytuały spa. Pozwól sobie na chwilę wytchnienia w rękach dyplomowanych specjalistów.
+            </p>
+            <div class="flex flex-wrap gap-4 pt-2">
+              <a href="#rezerwacja" class="px-8 py-3.5 rounded-full text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 shadow-lg shadow-brand-600/30 transition-all transform hover:-translate-y-0.5">
+                Zarezerwuj wizytę online
+              </a>
+              <a href="#uslugi" class="px-8 py-3.5 rounded-full text-base font-semibold text-neutral-700 bg-white border border-neutral-200 hover:bg-neutral-50 shadow-sm transition-all">
+                Zobacz katalog i cennik
+              </a>
+            </div>
+            
+            <!-- Quick features -->
+            <div class="pt-8 border-t border-neutral-200/60 grid grid-cols-3 gap-4">
+              <div>
+                <p class="font-serif text-2xl font-bold text-neutral-900">4.9 / 5</p>
+                <p class="text-xs text-neutral-500 font-medium">Ponad 1200 opinii</p>
+              </div>
+              <div>
+                <p class="font-serif text-2xl font-bold text-neutral-900">100%</p>
+                <p class="text-xs text-neutral-500 font-medium">Kosmetyki naturalne</p>
+              </div>
+              <div>
+                <p class="font-serif text-2xl font-bold text-neutral-900">10+ lat</p>
+                <p class="text-xs text-neutral-500 font-medium">Doświadczenia zespołu</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hero Image Card -->
+          <div class="lg:col-span-5 relative">
+            <div class="relative mx-auto max-w-md rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-neutral-100 aspect-[4/5] flex items-center justify-center group">
+              <!-- Decorative background with gradient & pattern -->
+              <div class="absolute inset-0 bg-gradient-to-tr from-brand-900/80 via-brand-700/40 to-transparent z-10"></div>
+              <div class="w-full h-full bg-[radial-gradient(#c59b82_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
+              
+              <div class="relative z-20 text-white p-8 flex flex-col justify-end h-full">
+                <span class="text-xs font-semibold tracking-widest uppercase text-brand-200">Gwarancja najwyższej jakości</span>
+                <h3 class="font-serif text-3xl font-bold mt-1 text-white">Rytuały Piękna & Relaksu</h3>
+                <p class="text-sm text-neutral-200 mt-2">Pracujemy wyłącznie na certyfikowanych dermokosmetykach i sprzęcie najnowszej generacji.</p>
+                <div class="mt-6 flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-xs">✨</div>
+                  <span class="text-xs font-medium text-neutral-100">Certyfikat Bezpieczeństwa Higienicznego 2026</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Services Catalog Section -->
+    <section id="uslugi" class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <span class="text-xs font-bold uppercase tracking-widest text-brand-600">Katalog Zabiegów</span>
+          <h2 class="font-serif text-3xl sm:text-4xl font-bold text-neutral-900">Nasze Usługi i Cennik</h2>
+          <p class="text-neutral-600 text-base">
+            Każdy zabieg poprzedzamy krótką, bezpłatną konsultacją, aby dobrać pielęgnację idealnie do Twoich potrzeb.
+          </p>
+        </div>
+
+        <!-- Services Container (rendered via JS from /api/services) -->
+        <div id="services-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div class="col-span-full py-12 flex justify-center items-center">
+            <div class="inline-flex items-center gap-3 text-neutral-500">
+              <svg class="animate-spin h-5 w-5 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Wczytywanie aktualnego cennika usług...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Booking Form Section -->
+    <section id="rezerwacja" class="py-20 bg-[#f8f5f2] relative">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-3xl shadow-xl border border-neutral-100 overflow-hidden">
+          <div class="p-8 sm:p-12">
+            <div class="text-center max-w-xl mx-auto mb-10 space-y-3">
+              <span class="text-xs font-bold uppercase tracking-widest text-brand-600">Szybka Rezerwacja</span>
+              <h2 class="font-serif text-3xl font-bold text-neutral-900">Zarezerwuj Wizytę Online</h2>
+              <p class="text-sm text-neutral-600">
+                Wybierz usługę, dogodny termin i podaj swoje dane kontaktowe. Potwierdzenie otrzymasz natychmiast!
+              </p>
+            </div>
+
+            <form id="appointment-form" class="space-y-6">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <!-- Service Selection -->
+                <div class="sm:col-span-2">
+                  <label for="service_id" class="block text-sm font-semibold text-neutral-700 mb-2">
+                    Wybierz zabieg lub usługę *
+                  </label>
+                  <select id="service_id" name="service_id" required class="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-neutral-50/50 text-neutral-800 transition-all">
+                    <option value="" disabled selected>Wczytywanie listy usług...</option>
+                  </select>
+                </div>
+
+                <!-- Customer Name -->
+                <div>
+                  <label for="customer_name" class="block text-sm font-semibold text-neutral-700 mb-2">
+                    Imię i Nazwisko *
+                  </label>
+                  <input type="text" id="customer_name" name="customer_name" placeholder="np. Anna Kowalska" required class="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-neutral-50/50 text-neutral-800 transition-all">
+                </div>
+
+                <!-- Customer Phone -->
+                <div>
+                  <label for="customer_phone" class="block text-sm font-semibold text-neutral-700 mb-2">
+                    Numer telefonu *
+                  </label>
+                  <input type="tel" id="customer_phone" name="customer_phone" placeholder="np. +48 600 000 000" required class="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-neutral-50/50 text-neutral-800 transition-all">
+                </div>
+
+                <!-- Customer Email -->
+                <div>
+                  <label for="customer_email" class="block text-sm font-semibold text-neutral-700 mb-2">
+                    Adres e-mail *
+                  </label>
+                  <input type="email" id="customer_email" name="customer_email" placeholder="anna@example.com" required class="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-neutral-50/50 text-neutral-800 transition-all">
+                </div>
+
+                <!-- Appointment Date -->
+                <div>
+                  <label for="appointment_date" class="block text-sm font-semibold text-neutral-700 mb-2">
+                    Data wizyty *
+                  </label>
+                  <input type="date" id="appointment_date" name="appointment_date" required class="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-neutral-50/50 text-neutral-800 transition-all">
+                </div>
+
+                <!-- Appointment Time -->
+                <div>
+                  <label for="appointment_time" class="block text-sm font-semibold text-neutral-700 mb-2">
+                    Preferowana godzina *
+                  </label>
+                  <select id="appointment_time" name="appointment_time" required class="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-neutral-50/50 text-neutral-800 transition-all">
+                    <option value="" disabled selected>Wybierz godzinę</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="12:00">12:00</option>
+                    <option value="13:30">13:30</option>
+                    <option value="14:30">14:30</option>
+                    <option value="15:30">15:30</option>
+                    <option value="16:30">16:30</option>
+                    <option value="17:30">17:30</option>
+                    <option value="18:30">18:30</option>
+                  </select>
+                </div>
+
+                <!-- Notes -->
+                <div class="sm:col-span-2">
+                  <label for="notes" class="block text-sm font-semibold text-neutral-700 mb-2">
+                    Uwagi do rezerwacji (opcjonalnie)
+                  </label>
+                  <textarea id="notes" name="notes" rows="3" placeholder="Informacje o alergiach, preferencjach lub pytania do stylisty..." class="w-full px-4 py-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-neutral-50/50 text-neutral-800 transition-all"></textarea>
+                </div>
+              </div>
+
+              <div class="pt-4">
+                <button type="submit" id="submit-btn" class="w-full py-4 px-6 rounded-xl text-base font-semibold text-white bg-brand-600 hover:bg-brand-700 active:scale-[0.99] shadow-lg shadow-brand-600/25 transition-all flex items-center justify-center gap-2">
+                  <span>Potwierdź i zarezerwuj termin</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Appointments Overview Section -->
+    <section id="rezerwacje-lista" class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-brand-600">Panel Podglądu</span>
+            <h2 class="font-serif text-3xl font-bold text-neutral-900 mt-1">Aktualne Rezerwacje</h2>
+            <p class="text-neutral-600 text-sm mt-1">Lista zarejestrowanych terminów w systemie salonu.</p>
+          </div>
+          <button id="refresh-appointments" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-neutral-300 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors">
+            <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>Odśwież listę</span>
+          </button>
+        </div>
+
+        <!-- Appointments Table / Card container -->
+        <div class="overflow-hidden bg-white rounded-2xl border border-neutral-200 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-neutral-600">
+              <thead class="bg-neutral-50 text-xs uppercase font-semibold text-neutral-500 border-b border-neutral-200">
+                <tr>
+                  <th scope="col" class="px-6 py-4">Klient</th>
+                  <th scope="col" class="px-6 py-4">Usługa</th>
+                  <th scope="col" class="px-6 py-4">Termin</th>
+                  <th scope="col" class="px-6 py-4">Godzina</th>
+                  <th scope="col" class="px-6 py-4">Status</th>
+                  <th scope="col" class="px-6 py-4 text-right">Akcja</th>
+                </tr>
+              </thead>
+              <tbody id="appointments-tbody" class="divide-y divide-neutral-200">
+                <tr>
+                  <td colspan="6" class="px-6 py-8 text-center text-neutral-500">
+                    Wczytywanie rezerwacji...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Us Section -->
+    <section id="o-nas" class="py-20 bg-brand-50/50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-16 space-y-4">
+          <span class="text-xs font-bold uppercase tracking-widest text-brand-600">Standardy Bellezza</span>
+          <h2 class="font-serif text-3xl sm:text-4xl font-bold text-neutral-900">Dlaczego Warto Nas Wybrać?</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div class="bg-white p-8 rounded-2xl border border-neutral-100 shadow-sm space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold">
+              🌿
+            </div>
+            <h3 class="font-serif text-xl font-bold text-neutral-900">Eko-kosmetyki Premium</h3>
+            <p class="text-sm text-neutral-600 leading-relaxed">
+              Stosujemy preparaty wegańskie, wolne od parabenów i mikroplastików, rekomendowane przez czołowych europejskich dermatologów.
+            </p>
+          </div>
+
+          <div class="bg-white p-8 rounded-2xl border border-neutral-100 shadow-sm space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold">
+              🏆
+            </div>
+            <h3 class="font-serif text-xl font-bold text-neutral-900">Certyfikowani Mistrzowie</h3>
+            <p class="text-sm text-neutral-600 leading-relaxed">
+              Nasz zespół stale podnosi kwalifikacje na międzynarodowych warsztatach w Mediolanie i Paryżu, podążając za światowymi trendami.
+            </p>
+          </div>
+
+          <div class="bg-white p-8 rounded-2xl border border-neutral-100 shadow-sm space-y-4">
+            <div class="w-12 h-12 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center text-xl font-bold">
+              🛡️
+            </div>
+            <h3 class="font-serif text-xl font-bold text-neutral-900">Autoklaw Medyczny i Bezpieczeństwo</h3>
+            <p class="text-sm text-neutral-600 leading-relaxed">
+              Wszystkie narzędzia sterylizujemy w medycznym autoklawie klasy B. Bezpieczeństwo i higiena to nasz bezwzględny priorytet.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact & Hours Section -->
+    <section id="kontakt" class="py-20 bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div class="space-y-6">
+            <span class="text-xs font-bold uppercase tracking-widest text-brand-600">Kontakt & Lokalizacja</span>
+            <h2 class="font-serif text-3xl sm:text-4xl font-bold text-neutral-900">Odwiedź Nasz Salon</h2>
+            <p class="text-neutral-600 leading-relaxed">
+              Zapewniamy dogodny dojazd, bezpłatny parking dla klientów oraz filiżankę aromatycznej kawy serwowanej podczas każdej wizyty.
+            </p>
+            
+            <div class="space-y-4 pt-2">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-brand-700 shrink-0 font-bold">📍</div>
+                <div>
+                  <h4 class="text-sm font-semibold text-neutral-900">Adres salonu:</h4>
+                  <p class="text-sm text-neutral-600">ul. Piękna 12, 00-549 Warszawa</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-brand-700 shrink-0 font-bold">📞</div>
+                <div>
+                  <h4 class="text-sm font-semibold text-neutral-900">Telefon recepcji:</h4>
+                  <p class="text-sm text-neutral-600">+48 22 123 45 67 / +48 600 123 456</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-lg bg-brand-50 flex items-center justify-center text-brand-700 shrink-0 font-bold">✉️</div>
+                <div>
+                  <h4 class="text-sm font-semibold text-neutral-900">E-mail:</h4>
+                  <p class="text-sm text-neutral-600">kontakt@bellezza-studio.pl</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-neutral-900 text-white p-8 sm:p-12 rounded-3xl shadow-xl space-y-6">
+            <h3 class="font-serif text-2xl font-bold">Godziny Otwarcia</h3>
+            <p class="text-sm text-neutral-400">Jesteśmy otwarci 6 dni w tygodniu:</p>
+            <div class="divide-y divide-neutral-800 text-sm">
+              <div class="py-3 flex justify-between">
+                <span class="text-neutral-300">Poniedziałek – Piątek</span>
+                <span class="font-semibold text-white">09:00 – 20:00</span>
+              </div>
+              <div class="py-3 flex justify-between">
+                <span class="text-neutral-300">Sobota</span>
+                <span class="font-semibold text-white">09:00 – 16:00</span>
+              </div>
+              <div class="py-3 flex justify-between">
+                <span class="text-neutral-400">Niedziela</span>
+                <span class="text-brand-500 font-medium">Nieczynne</span>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-neutral-800 flex items-center justify-between">
+              <span class="text-xs text-neutral-400">Status systemu:</span>
+              <span id="backend-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-950 text-emerald-400 border border-emerald-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                API Aktywne
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-neutral-950 text-neutral-400 py-12 border-t border-neutral-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white font-serif font-bold text-sm">
+          B
+        </div>
+        <span class="text-white font-serif font-bold text-lg">Bellezza Studio</span>
+      </div>
+      <p class="text-xs text-neutral-500 text-center md:text-left">
+        &copy; 2026 Bellezza Studio. Projekt dyplomowy DevOps (Infrastruktura Chmurowa AWS, CI/CD, Monitoring).
+      </p>
+      <div class="flex items-center gap-4 text-xs">
+        <a href="/health" target="_blank" class="hover:text-white transition-colors">Endpoint /health</a>
+        <span>•</span>
+        <a href="/metrics" target="_blank" class="hover:text-white transition-colors">Metryki Prometheus</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
