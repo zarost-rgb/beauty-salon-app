@@ -1,0 +1,190 @@
+---
+# ==============================================================================
+# Ansible Playbook: Konfiguracja srodowiska AWS EC2 dla Beauty Salon App
+# ==============================================================================
+- name: Przygotowanie serwera produkcyjnego AWS EC2 (Docker, UFW, Narzedzia)
+  hosts: beauty_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    app_user: ubuntu
+    app_dir: "/home/ubuntu/beauty-salon-app"
+    docker_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    system_packages:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - software-properties-common
+      - ufw
+      - git
+      - htop
+      - jq
+      - acl
+      - unzip
+      - tar
+
+  tasks:
+    # --------------------------------------------------------------------------
+    # 1. Sprawdzenie polaczenia i gotowosci systemu
+    # --------------------------------------------------------------------------
+    - name: Oczekiwanie na gotowosc uslug systemowych i brak blokad APT
+      ansible.builtin.wait_for_connection:
+        timeout: 120
+
+    # --------------------------------------------------------------------------
+    # 2. Instalacja wymaganych pakietow systemowych
+    # --------------------------------------------------------------------------
+    - name: Aktualizacja pamieci podrecznej repozytoriow APT
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Instalacja bazowych pakietow i zaleznosci systemowych
+      ansible.builtin.apt:
+        name: "{{ system_packages }}"
+        state: present
+
+    # --------------------------------------------------------------------------
+    # 3. Konfiguracja oficjalnego repozytorium Docker dla Ubuntu
+    # --------------------------------------------------------------------------
+    - name: Utworzenie katalogu na oficjalne klucze GPG repozytoriow
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+
+    - name: Pobranie oficjalnego klucza GPG Dockera
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: "0644"
+        force: false
+
+    - name: Dodanie oficjalnego repozytorium Docker APT
+      ansible.builtin.apt_repository:
+        repo: >-
+          deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+          https://download.docker.com/linux/ubuntu
+          {{ ansible_distribution_release }} stable
+        filename: docker
+        state: present
+
+    - name: Ponowna aktualizacja bazy pakietow po dodaniu repozytorium Docker
+      ansible.builtin.apt:
+        update_cache: true
+
+    # --------------------------------------------------------------------------
+    # 4. Instalacja silnika Docker i wtyczki Docker Compose
+    # --------------------------------------------------------------------------
+    - name: Instalacja silnika Docker Engine oraz Docker Compose Plugin
+      ansible.builtin.apt:
+        name: "{{ docker_packages }}"
+        state: present
+
+    - name: Uruchomienie i wlaczenie autostartu uslugi Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Uruchomienie i wlaczenie autostartu uslugi Containerd
+      ansible.builtin.systemd:
+        name: containerd
+        state: started
+        enabled: true
+
+    - name: Dodanie uzytkownika {{ app_user }} do grupy docker (dostep bez sudo)
+      ansible.builtin.user:
+        name: "{{ app_user }}"
+        groups: docker
+        append: true
+
+    # --------------------------------------------------------------------------
+    # 5. Konfiguracja zapory sieciowej UFW (Bezpieczenstwo)
+    # --------------------------------------------------------------------------
+    - name: Ustawienie domyslnej polityki UFW dla ruchu przychodzacego (Deny)
+      community.general.ufw:
+        direction: incoming
+        default: deny
+      ignore_errors: true
+
+    - name: Ustawienie domyslnej polityki UFW dla ruchu wychodzacego (Allow)
+      community.general.ufw:
+        direction: outgoing
+        default: allow
+      ignore_errors: true
+
+    - name: Otwarcie portu 22/TCP dla polaczen administracyjnych SSH
+      ansible.builtin.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+        comment: "Dostep administracyjny SSH"
+
+    - name: Otwarcie portu 80/TCP dla ruchu HTTP (Nginx Reverse Proxy)
+      ansible.builtin.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+        comment: "Aplikacja WWW - Nginx HTTP"
+
+    - name: Otwarcie portu 443/TCP dla szyfrowanego ruchu HTTPS
+      ansible.builtin.ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+        comment: "Aplikacja WWW - Nginx HTTPS"
+
+    - name: Otwarcie portu 3000/TCP dla pulpitow nawigacyjnych Grafana
+      ansible.builtin.ufw:
+        rule: allow
+        port: "3000"
+        proto: tcp
+        comment: "Monitoring - Panele Grafana"
+
+    - name: Aktywacja i wlaczenie zapory sieciowej UFW
+      ansible.builtin.ufw:
+        state: enabled
+
+    # --------------------------------------------------------------------------
+    # 6. Przygotowanie struktury katalogow dla aplikacji
+    # --------------------------------------------------------------------------
+    - name: Utworzenie katalogu docelowego wdrozenia {{ app_dir }}
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: "0755"
+
+    # --------------------------------------------------------------------------
+    # 7. Weryfikacja poprawnosci instalacji
+    # --------------------------------------------------------------------------
+    - name: Sprawdzenie wersji silnika Docker
+      ansible.builtin.command: docker --version
+      register: docker_version_output
+      changed_when: false
+
+    - name: Sprawdzenie wersji Docker Compose
+      ansible.builtin.command: docker compose version
+      register: compose_version_output
+      changed_when: false
+
+    - name: Podsumowanie konfiguracji serwera
+      ansible.builtin.debug:
+        msg:
+          - "=========================================================="
+          - "SERWER AWS EC2 ZOSTAŁ POMYŚLNIE SKONFIGUROWANY!"
+          - "Wersja Docker Engine: {{ docker_version_output.stdout }}"
+          - "Wersja Docker Compose: {{ compose_version_output.stdout }}"
+          - "Uzytkownik '{{ app_user }}' dodany do grupy docker."
+          - "Zapora UFW: Otwarte porty 22, 80, 443, 3000."
+          - "Katalog aplikacji: {{ app_dir }}"
+          - "=========================================================="

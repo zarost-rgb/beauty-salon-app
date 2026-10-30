@@ -1,0 +1,13 @@
+# ==============================================================================
+# Wzor inwentarza dla Ansible (Beauty Salon App)
+# Skopiuj ten plik jako inventory.ini i wpisz adres Elastic IP uzyskany z Terraform:
+#   cp inventory.ini.example inventory.ini
+# Adres IP mozesz pobrac za pomoca komendy:
+#   terraform -chdir=../terraform output -raw public_ip
+# ==============================================================================
+
+[beauty_servers]
+beauty-server ansible_host=TWOJ_PUBLICZNY_IP_AWS ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_ed25519
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
