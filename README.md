@@ -45,12 +45,40 @@ graph TD
 beauty-salon-app/
 ├── .env.example              # Wzór zmiennych środowiskowych
 ├── .env                      # Aktywne zmienne środowiskowe
-├── .gitignore                # Wykluczenia z repozytorium Git
-├── docker-compose.yml        # Orkiestracja kontenerów (db, backend, frontend, proxy)
+├── .gitignore                # Wykluczenia z repozytorium Git (Terraform, Ansible, .env)
+├── docker-compose.yml        # Orkiestracja kontenerów aplikacji (db, backend, frontend, proxy)
 ├── PLAN_PROJEKTU.md          # Pełny plan techniczny projektu dyplomowego
 ├── WYMAGANIA_PROJEKTU.md     # Macierz zgodności z wymaganiami formalnymi
-├── db/
-│   └── init.sql              # Skrypt inicjalizujący schemat bazy i dane początkowe
+├── .github/
+│   └── workflows/
+│       ├── ci.yml            # Pipeline CI: testy i walidacja Docker na gałęziach funkcyjnych
+│       └── deploy.yml        # Pipeline CD: publikacja GHCR, SSH deploy na AWS, Telegram, Email
+├── terraform/                # Infrastruktura jako Kod (AWS Cloud)
+│   ├── provider.tf           # Konfiguracja dostawcy AWS
+│   ├── network.tf            # Dedykowane VPC, podsieć publiczna, brama IGW i routing
+│   ├── security.tf           # Reguły zapory sieciowej AWS Security Group
+│   ├── compute.tf            # Definicja instancji EC2, dysk EBS GP3 i klucz SSH
+│   ├── variables.tf          # Definicje zmiennych wejściowych
+│   ├── terraform.tfvars      # Aktywna konfiguracja parametrów dla wdrożenia
+│   ├── terraform.tfvars.example # Wzór pliku zmiennych dla repozytorium Git
+│   └── outputs.tf            # Wyjścia: publiczny IP, komenda SSH, rekord inwentarza Ansible
+├── ansible/                  # Zarządzanie konfiguracją systemu operacyjnego (AWS EC2)
+│   ├── ansible.cfg           # Konfiguracja Ansible (pipelining, użytkownik ubuntu)
+│   ├── inventory.ini         # Aktywny inwentarz z adresem serwera AWS
+│   ├── inventory.ini.example # Wzór pliku inwentarza dla repozytorium
+│   ├── playbook.yml          # Playbook: instalacja Docker CE, Compose, reguły UFW
+│   └── verify_server.sh      # Skrypt weryfikacji gotowości serwera przed komisją
+├── monitoring/               # Stos Obserwowalności (Observability Stack)
+│   ├── docker-compose.monitoring.yml # Orkiestracja Prometheus, Grafana, Loki, cAdvisor
+│   ├── prometheus.yml        # Konfiguracja zbierania metryk (scraping)
+│   ├── loki/
+│   │   └── loki-config.yml   # Konfiguracja magazynu logów Grafana Loki
+│   ├── promtail/
+│   │   └── promtail-config.yml # Konfiguracja agenta przekazywania logów do Loki
+│   └── grafana/
+│       ├── dashboards/
+│       │   └── beauty_salon_dashboard.json # Gotowy, predefiniowany dashboard
+│       └── provisioning/     # Automatyczny provisioning źródeł (Prometheus, Loki) i dashboardów
 ├── backend/
 │   ├── Dockerfile            # Multi-stage Dockerfile (Node.js 20 Alpine)
 │   ├── .dockerignore
@@ -79,13 +107,33 @@ beauty-salon-app/
 ├── nginx/
 │   ├── Dockerfile            # Obraz Reverse Proxy Gateway
 │   └── default.conf          # Konfiguracja routingu i load balancingu
-└── docs/
-    └── INSTRUKCJA_OBRONY.md  # Przewodnik demonstracji projektu przed komisją
+├── db/
+│   └── init.sql              # Skrypt inicjalizujący schemat bazy i dane początkowe
+└── docs/                     # Kompletna dokumentacja techniczna i przewodnik obrony
+    ├── ARCHITEKTURA.md       # Trójwarstwowa architektura logiczna, sieciowa i bezpieczeństwa
+    ├── IAC_AWS.md            # Wdrożenie infrastruktury AWS od zera (Terraform + Ansible)
+    ├── CICD_PIPELINE.md      # Przepływ CI/CD w GitHub Actions, sekrety, bot Telegram
+    ├── MONITORING_I_LOGI.md  # Metryki Prometheus, zapytania PromQL/LogQL, panele Grafana
+    └── INSTRUKCJA_OBRONY.md  # Przewodnik demonstracji projektu i pytania komisji (Q&A)
 ```
 
 ---
 
-## 3. Szybkie Uruchomienie (Quick Start)
+## 3. Kompletna Dokumentacja Techniczna (Katalog `docs/`)
+
+Projekt zawiera kompletną, wyczerpującą dokumentację inżynierską w języku polskim przygotowaną z myślą o obronie dyplomowej:
+
+| Dokument | Ścieżka | Zakres tematyczny |
+| :--- | :--- | :--- |
+| **Architektura Systemu** | [`docs/ARCHITEKTURA.md`](docs/ARCHITEKTURA.md) | Opis warstw logicznych, sieci VPC, topologii Docker, modelu bezpieczeństwa i diagramów. |
+| **Infrastruktura AWS (IaC)** | [`docs/IAC_AWS.md`](docs/IAC_AWS.md) | Powołanie chmury krok po kroku za pomocą Terraform i konfiguracja hosta w Ansible. |
+| **Potok CI/CD** | [`docs/CICD_PIPELINE.md`](docs/CICD_PIPELINE.md) | Opis workflow GitHub Actions, konfiguracja sekretów, bot Telegram i powiadomienia e-mail. |
+| **Monitoring i Logi** | [`docs/MONITORING_I_LOGI.md`](docs/MONITORING_I_LOGI.md) | Metryki systemowe i aplikacyjne, prom-client, zapytania PromQL, przeszukiwanie logów LogQL. |
+| **Przewodnik Obrony** | [`docs/INSTRUKCJA_OBRONY.md`](docs/INSTRUKCJA_OBRONY.md) | Scenariusz 15-minutowej prezentacji na żywo, harmonogram oraz gotowe odpowiedzi na pytania komisji. |
+
+---
+
+## 4. Szybkie Uruchomienie (Quick Start)
 
 ### Wymagania wstępne:
 - Zainstalowany `docker` oraz `docker compose` (lub `docker-compose`).
@@ -108,8 +156,14 @@ Sprawdzenie statusu kontenerów:
 docker compose ps
 ```
 
-### Krok 3: Dostęp w przeglądarce
+### Krok 3: (Opcjonalnie) Uruchomienie stosu monitoringu (Prometheus, Grafana, Loki)
+```bash
+docker compose -f monitoring/docker-compose.monitoring.yml up -d
+```
+
+### Krok 4: Dostęp w przeglądarce
 * **Aplikacja Salonu Urody (Frontend)**: `http://localhost/`
+* **Pulpit Monitoringu Grafana**: `http://localhost:3000` (login: `admin`, hasło: `admin`)
 * **Healthcheck aplikacji**: `http://localhost/health`
 * **Metryki Prometheus**: `http://localhost/metrics`
 * **API Usług**: `http://localhost/api/services`
@@ -117,7 +171,7 @@ docker compose ps
 
 ---
 
-## 4. Testy Jednostkowe i Integracyjne (CI/CD Ready)
+## 5. Testy Jednostkowe i Integracyjne (CI/CD Ready)
 
 Testy backendu nie wymagają działającej bazy danych (wykorzystują mockowanie modułu bazy za pomocą `jest` i `supertest`), co umożliwia błyskawiczne i niezależne wykonanie w pipeline CI/CD na dowolnej maszynie.
 
@@ -137,7 +191,7 @@ Tests:       14 passed, 14 total
 
 ---
 
-## 5. Kluczowe Endpointy REST API
+## 6. Kluczowe Endpointy REST API
 
 | Metoda | Ścieżka | Opis | Przykładowa odpowiedź / Kod |
 | :--- | :--- | :--- | :--- |
@@ -152,13 +206,15 @@ Tests:       14 passed, 14 total
 
 ---
 
-## 6. Zatrzymanie Aplikacji
+## 7. Zatrzymanie Aplikacji
 
 ```bash
 docker compose down
+docker compose -f monitoring/docker-compose.monitoring.yml down
 ```
 
-W celu usunięcia wolumenu z danymi bazy:
+W celu usunięcia wolumenów z danymi bazy i monitoringu:
 ```bash
 docker compose down -v
+docker compose -f monitoring/docker-compose.monitoring.yml down -v
 ```
