@@ -1,0 +1,225 @@
+name: Deploy - Continuous Delivery to AWS EC2
+
+# Uruchamiany wylacznie przy pushu/scaleniu do galezi glownej
+on:
+  push:
+    branches:
+      - "main"
+      - "master"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  # ============================================================================
+  # 1. Weryfikacja jakosci kodu (Testy)
+  # ============================================================================
+  test:
+    name: Run Unit & Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run Jest test suites
+        run: |
+          cd backend
+          npm test
+
+  # ============================================================================
+  # 2. Budowa i publikacja obrazow w rejestrze GHCR
+  # ============================================================================
+  build-and-push:
+    name: Build & Push Images to GHCR
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/beauty-salon-backend:latest
+            ghcr.io/${{ github.repository_owner }}/beauty-salon-backend:${{ github.sha }}
+
+      - name: Build & Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/beauty-salon-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/beauty-salon-frontend:${{ github.sha }}
+
+      - name: Build & Push Nginx Gateway Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          file: ./nginx/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/beauty-salon-proxy:latest
+            ghcr.io/${{ github.repository_owner }}/beauty-salon-proxy:${{ github.sha }}
+
+  # ============================================================================
+  # 3. Bezpieczny deployment przez SSH na serwer AWS EC2
+  # ============================================================================
+  deploy:
+    name: Deploy to AWS EC2 via SSH
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Execute deployment commands via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST || secrets.AWS_EC2_HOST }}
+          EC2_KEY: ${{ secrets.EC2_SSH_KEY || secrets.AWS_SSH_PRIVATE_KEY }}
+          EC2_USER: ${{ secrets.EC2_USER || secrets.AWS_EC2_USER || 'ubuntu' }}
+        if: env.EC2_HOST != '' && env.EC2_KEY != ''
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ env.EC2_KEY }}
+          envs: GITHUB_SHA
+          script_stop: true
+          script: |
+            echo "Rozpoczecie procesu wdrozenia commit: $GITHUB_SHA"
+            
+            # Przejscie do katalogu projektu lub sklonowanie przy pierwszym uruchomieniu
+            TARGET_DIR="/home/ubuntu/beauty-salon-app"
+            if [ ! -d "$TARGET_DIR" ]; then
+              TARGET_DIR="$HOME/beauty-salon-app"
+            fi
+            
+            if [ ! -d "$TARGET_DIR" ]; then
+              echo "Klonowanie repozytorium..."
+              git clone https://github.com/${{ github.repository }}.git "$TARGET_DIR"
+            fi
+            
+            cd "$TARGET_DIR"
+            
+            # Pobranie najnowszego kodu
+            git fetch --all
+            git checkout main || git checkout master
+            git pull origin main || git pull origin master
+            
+            # Przygotowanie pliku .env jesli nie istnieje
+            if [ ! -f .env ]; then
+              cp .env.example .env
+            fi
+            
+            # Restart i bezprzestojowa aktualizacja kontenerow
+            docker compose down
+            docker compose up --build -d
+            
+            # Usuniecie starych nieuzywanych warstw w celu zaoszczedzenia pamieci
+            docker image prune -f
+            
+            # Weryfikacja stanu dzialania endpointu /health
+            echo "Weryfikacja endpointu zdrowia (/health)..."
+            sleep 5
+            HEALTHY=false
+            for i in {1..10}; do
+              if curl -s -f http://localhost/health > /dev/null; then
+                echo "Healthcheck zakonczony sukcesem: aplikacja odpowiada poprawnie!"
+                HEALTHY=true
+                break
+              fi
+              echo "Proba weryfikacji ($i/10)... Oczekiwanie na gotowosc bazy i API"
+              sleep 3
+            done
+            
+            if [ "$HEALTHY" = false ]; then
+              echo "BLAD: Aplikacja nie odpowiedziala poprawnie na /health!"
+              exit 1
+            fi
+
+  # ============================================================================
+  # 4. Automatyczne powiadomienia (Telegram + E-mail)
+  # ============================================================================
+  notify:
+    name: Send Notifications (Telegram & Email)
+    needs: [test, build-and-push, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      # Powiadomienie na komunikator Telegram
+      - name: Send Telegram Notification
+        uses: appleboy/telegram-action@master
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_TO: ${{ secrets.TELEGRAM_CHAT_ID }}
+        if: env.TELEGRAM_TOKEN != '' && env.TELEGRAM_TO != ''
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            *Beauty Salon App — Status Wdrożenia* 💅
+            
+            *Status:* ${{ needs.deploy.result == 'success' && '✅ Wdrożono pomyślnie!' || '❌ Błąd wdrożenia' }}
+            *Gałąź:* `${{ github.ref_name }}`
+            *Autor:* `${{ github.actor }}`
+            *Commit:* [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            *Wiadomość:* _${{ github.event.head_commit.message }}_
+
+      # Powiadomienie na skrzynke E-mail
+      - name: Send E-mail Notification
+        uses: dawidd6/action-send-mail@v3
+        env:
+          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+        if: env.SMTP_SERVER != '' && env.SMTP_USERNAME != '' && env.NOTIFICATION_EMAIL != ''
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT || 465 }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "[Beauty Salon App] Deploy: ${{ needs.deploy.result == 'success' && 'SUKCES' || 'BŁĄD' }} (Commit ${{ github.sha }})"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: "DevOps CI/CD <${{ secrets.SMTP_USERNAME }}>"
+          body: |
+            Raport Wdrożenia Beauty Salon App (AWS EC2)
+            
+            Status: ${{ needs.deploy.result == 'success' && 'SUKCES' || 'NIEPOWODZENIE' }}
+            Gałąź: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Autor: ${{ github.actor }}
+            Wiadomość commita: ${{ github.event.head_commit.message }}
+            
+            Repozytorium: https://github.com/${{ github.repository }}

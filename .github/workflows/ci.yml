@@ -1,0 +1,86 @@
+name: CI - Continuous Integration (Feature Branches & PR)
+
+# Wyzwalanie na wszystkich galeziach funkcyjnych (oprócz main) oraz przy Pull Requestach
+on:
+  push:
+    branches-ignore:
+      - "main"
+      - "master"
+  pull_request:
+    branches:
+      - "main"
+      - "master"
+
+jobs:
+  # ============================================================================
+  # 1. Automatyczne testy jednostkowe i integracyjne
+  # ============================================================================
+  test:
+    name: Run Unit & Integration Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Run Jest test suites
+        run: |
+          cd backend
+          npm test
+
+  # ============================================================================
+  # 2. Walidacja budowania wieloetapowych obrazów Docker (Multi-stage Build)
+  # ============================================================================
+  build-check:
+    name: Validate Docker Builds
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Backend Docker Image (Validation only)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: false
+          tags: beauty-salon-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Frontend Docker Image (Validation only)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: beauty-salon-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build Nginx Gateway Image (Validation only)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          file: ./nginx/Dockerfile
+          push: false
+          tags: beauty-salon-proxy:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
