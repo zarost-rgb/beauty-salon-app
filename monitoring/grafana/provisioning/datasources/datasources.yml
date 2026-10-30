@@ -1,0 +1,27 @@
+# ==============================================================================
+# Automatyczny Provisioning zrodel danych dla Grafany
+# ==============================================================================
+
+apiVersion: 1
+
+datasources:
+  # 1. Glowny magazyn metryk TSDB - Prometheus
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 10s
+      httpMethod: POST
+
+  # 2. Centralny magazyn logow - Grafana Loki
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    isDefault: false
+    editable: false
+    jsonData:
+      maxLines: 1000

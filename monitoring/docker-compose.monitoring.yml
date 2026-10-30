@@ -1,0 +1,129 @@
+# ==============================================================================
+# Orkiestracja Steku Obserwowalnosci (Prometheus, Grafana, Loki, cAdvisor)
+# Uruchomienie: docker compose -f docker-compose.monitoring.yml up -d
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Prometheus - Zbieranie i przechowywanie metryk czasowych (TSDB)
+  # ----------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: beauty-monitoring-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - beauty-network
+
+  # ----------------------------------------------------------------------------
+  # 2. Node Exporter - Metryki zasobow serwera Linux / AWS EC2
+  # ----------------------------------------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: beauty-monitoring-node-exporter
+    restart: unless-stopped
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - beauty-network
+
+  # ----------------------------------------------------------------------------
+  # 3. cAdvisor - Zuzycie CPU, RAM i sieci przez kontenery Dockera
+  # ----------------------------------------------------------------------------
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: beauty-monitoring-cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - beauty-network
+
+  # ----------------------------------------------------------------------------
+  # 4. Grafana Loki - Centralny silnik agregacji i wyszukiwania logow
+  # ----------------------------------------------------------------------------
+  loki:
+    image: grafana/loki:3.1.0
+    container_name: beauty-monitoring-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - beauty-network
+
+  # ----------------------------------------------------------------------------
+  # 5. Promtail - Agent przekazujacy logi kontenerow do Loki
+  # ----------------------------------------------------------------------------
+  promtail:
+    image: grafana/promtail:3.1.0
+    container_name: beauty-monitoring-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+    depends_on:
+      - loki
+    networks:
+      - beauty-network
+
+  # ----------------------------------------------------------------------------
+  # 6. Grafana - Wizualizacja, pulpity nawigacyjne i podglad logow
+  # ----------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: beauty-monitoring-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/json/beauty_salon_dashboard.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards/json:ro
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - beauty-network
+
+volumes:
+  prometheus_data:
+    name: beauty_monitoring_prometheus_data
+  grafana_data:
+    name: beauty_monitoring_grafana_data
+  loki_data:
+    name: beauty_monitoring_loki_data
+
+networks:
+  beauty-network:
+    name: beauty-network
+    external: true

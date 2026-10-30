@@ -1,0 +1,16 @@
+# ==============================================================================
+# Automatyczny Provisioning pulpitow nawigacyjnych (Dashboards) w Grafanie
+# ==============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: "Beauty Salon Dashboards"
+    orgId: 1
+    folder: "Beauty Salon App"
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 15
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json

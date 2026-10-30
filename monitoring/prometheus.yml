@@ -1,0 +1,42 @@
+# ==============================================================================
+# Konfiguracja Prometheus dla projektu Beauty Salon App
+# ==============================================================================
+
+global:
+  scrape_interval: 10s       # Czestotliwosc zbierania metryk
+  evaluation_interval: 10s   # Czestotliwosc ewaluacji regul alertowych
+  scrape_timeout: 5s
+
+scrape_configs:
+  # 1. Metryki wlasne serwera Prometheus
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # 2. Metryki systemu operacyjnego i maszyny AWS EC2 (Node Exporter)
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # 3. Metryki zuzycia zasobow przez kontenery Dockera (cAdvisor)
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  # 4. Metryki aplikacyjne backendu Node.js / Express
+  - job_name: "beauty-salon-backend"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["backend:5000"]
+        labels:
+          app: "beauty-salon"
+          component: "backend-api"
+
+  # 5. Metryki bramy Nginx Reverse Proxy (opcjonalnie przez endpoint /metrics)
+  - job_name: "beauty-salon-proxy"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["proxy:80"]
+        labels:
+          app: "beauty-salon"
+          component: "nginx-proxy"
